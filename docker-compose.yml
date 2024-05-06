@@ -1,0 +1,51 @@
+services:
+  nginx:
+    build: docker/nginx
+    restart: on-failure
+    volumes:
+      - ${PWD}/backend:/var/www/backend:delegated
+      - ${PWD}/var/logs/nginx/:/var/log/nginx:delegated
+      - ${PWD}/docker/nginx/backend.conf:/etc/nginx/conf.d/backend.conf:delegated
+    ports:
+      - "90:80"
+    depends_on:
+      - backend
+
+  backend:
+    build: docker/php
+    restart: on-failure
+    volumes:
+      - ${PWD}/backend:/var/www/backend:delegated
+    working_dir: /var/www/backend
+
+  mysql:
+      image: mysql:8.0
+      restart: on-failure
+      environment:
+        MYSQL_DATABASE: ${MYSQL_DATABASE_NAME}
+        MYSQL_USER: ${MYSQL_USER}
+        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        MYSQL_PORT: ${MYSQL_PORT}
+      ports:
+        - '${MYSQL_PORT}:3306'
+      volumes:
+        - mysql-data:/var/lib/mysql
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_USER}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
+      KEYCLOAK_FRONTEND_URL: 'http://localhost:5173/'
+    command: ['start-dev', "--http-port=8081"]
+    ports:
+       - "8081:8081"
+    volumes:
+      - keycloak_data:/opt/jboss/keycloak/standalone/data
+      - keycloak_logs:/opt/jboss/keycloak/standalone/log
+
+volumes:
+  mysql-data:
+  keycloak_data:
+  keycloak_logs:

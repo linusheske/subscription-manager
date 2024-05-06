@@ -1,0 +1,9 @@
+security:
+    firewalls:
+        main:
+            lazy: true
+            stateless: true
+            custom_authenticators:
+                - App\Security\KeycloakAuthenticator
+    access_control:
+        - { path: ^/api, roles: ROLE_USER }
